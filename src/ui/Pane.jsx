@@ -9,6 +9,7 @@ export default class Pane extends BaseComponent {
   }
 
   getInitialState () {
+    require('slap-util').logger.warn('Pane#getInitialState')
     return _.merge({title: "Untitled pane"}, super.getInitialState.apply(this, arguments))
   }
 

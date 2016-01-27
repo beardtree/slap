@@ -109,7 +109,7 @@ Example: \`${command} file.c\`.
 
     if (stdin || !opts._.length) { // if no files are passed
       var panes = slap.state.panes
-      slap.newEditorPane({children: stdin.toString()}, true)
+      slap.newPane({type: 'EditorPane', props: {children: stdin.toString()}}, true)
     }
 
     return slap

@@ -25,6 +25,8 @@ export default class EditorPane extends Pane {
     ;(['onDidChange', 'onDidChangePath']).forEach(prop => {
       self.refs.editor.textBuf[prop](() => { self.updateTitle() })
     })
+    self.updateTitle()
+    util.logger.warn('EditorPane#componentDidMount')
 
     return super.componentDidMount.apply(self, arguments)
   }
@@ -38,6 +40,7 @@ export default class EditorPane extends Pane {
       : "new file"
     if (textBuf.isModified()) util.markup(`${title}*`, opts.header.style.changed)
     self.setState({title: title.toString()})
+    self.context.slap.forceUpdate()
   }
 
   save (path) {
@@ -60,7 +63,7 @@ export default class EditorPane extends Pane {
     var self = this
     var slap = self.context.slap
     if (self.refs.editor.textBuf.isModified()) {
-      var currentPane = slap.getCurrentPane()
+      var currentPane = _.get(slap, 'refs.currentPane')
       if (_.get(currentPane, 'state.visibleForm') === 'saveAsCloseForm') {
         currentPane.on('state', function handleState (state) {
           if (state.visibleForm === 'saveAsCloseForm') return

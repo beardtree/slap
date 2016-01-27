@@ -82,6 +82,8 @@ var EditorPane = (function (_Pane) {
           self.updateTitle();
         });
       });
+      self.updateTitle();
+      _slapUtil2.default.logger.warn('EditorPane#componentDidMount');
 
       return _get(Object.getPrototypeOf(EditorPane.prototype), 'componentDidMount', this).apply(self, arguments);
     }
@@ -94,6 +96,7 @@ var EditorPane = (function (_Pane) {
       var title = editorPath ? _blessed2.default.escape(_path2.default.relative(self.context.slap.refs.fileBrowser.cwd, editorPath)) : "new file";
       if (textBuf.isModified()) _slapUtil2.default.markup(title + '*', _opts2.default.header.style.changed);
       self.setState({ title: title.toString() });
+      self.context.slap.forceUpdate();
     }
   }, {
     key: 'save',
@@ -119,7 +122,7 @@ var EditorPane = (function (_Pane) {
       var self = this;
       var slap = self.context.slap;
       if (self.refs.editor.textBuf.isModified()) {
-        var currentPane = slap.getCurrentPane();
+        var currentPane = _lodash2.default.get(slap, 'refs.currentPane');
         if (_lodash2.default.get(currentPane, 'state.visibleForm') === 'saveAsCloseForm') {
           currentPane.on('state', function handleState(state) {
             if (state.visibleForm === 'saveAsCloseForm') return;

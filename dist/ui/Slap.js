@@ -190,7 +190,7 @@ var Slap = (function (_BaseComponent) {
 
       var editor = _lodash2.default.get(pane, 'refs.editor');
       if (editor && editor.textBuf.isModified()) {
-        var currentPaneSaveAsCloseForm = (self.getCurrentPane() || {}).refs.saveAsCloseForm || {};
+        var currentPaneSaveAsCloseForm = _lodash2.default.get(self, 'refs.currentPane.refs.saveAsCloseForm', {});
         if (currentPaneSaveAsCloseForm.visible) {
           currentPaneSaveAsCloseForm.once('hide', function () {
             self.closePane.apply(self, [pane].concat(args));
@@ -215,7 +215,7 @@ var Slap = (function (_BaseComponent) {
       return _bluebird2.default.resolve(pane).tap(function () {
         if (pane) return;
         if (fs.lstatSync(filePath).isDirectory()) throw _lodash2.default.merge(new Error('EISDIR: illegal operation on a directory, read'), { cause: { code: 'EISDIR' } });
-        pane = self.newEditorPane({}, current);
+        pane = self.newPane({ type: 'EditorPane' }, current);
         return pane.refs.editor.open(filePath).return(pane);
       }).catch(function (err) {
         if (pane) self.closePane(pane);
@@ -248,10 +248,10 @@ var Slap = (function (_BaseComponent) {
       });
     }
   }, {
-    key: 'newEditorPane',
-    value: function newEditorPane(props, current) {
+    key: 'newPane',
+    value: function newPane(paneOpts, current) {
       var panes = this.state.panes;
-      var newState = { panes: panes.concat([_react2.default.createElement(_EditorPane2.default, props)]) };
+      var newState = { panes: panes.concat([paneOpts]) };
       if (current) newState.currentPane = panes.length;
       this.setState(newState);
     }
@@ -268,7 +268,7 @@ var Slap = (function (_BaseComponent) {
 
       switch (_baseWidget2.default.prototype.resolveBinding.call({ options: props }, key)) {
         case 'new':
-          self.newEditorPane({}, true);return false;
+          self.newPane({ type: 'EditorPane' }, true);return false;
         case 'open':
           refs.fileBrowser.show();refs.fileBrowser.focus();return false;
         case 'nextPane':
@@ -289,7 +289,7 @@ var Slap = (function (_BaseComponent) {
                   if (self._panesBlockingQuit) {
                     self._panesBlockingQuit.splice(self._panesBlockingQuit.indexOf(pane), 1);
                     if (self._panesBlockingQuit.length) {
-                      self.getCurrentPane().saveAsCloseForm.show();
+                      _lodash2.default.result(self, 'refs.currentPane.refs.saveAsCloseForm.show');
                     } else {
                       self.quit();
                     }
@@ -333,12 +333,14 @@ var Slap = (function (_BaseComponent) {
       var state = self.state;
       var panes = state.panes;
 
-      var currentPane = self.getCurrentPane();
-      var editor = _lodash2.default.get(currentPane, 'refs.editor');
+      var currentPane = _lodash2.default.get(self, 'refs.currentPane');
+      var editor = _lodash2.default.get(self, 'currentPane.refs.editor');
       var cursor = editor ? editor.selection.getHeadPosition() : null;
 
       var helpBinding = props.bindings.help;
       if (Array.isArray(helpBinding)) helpBinding = helpBinding[0];
+
+      _slapUtil2.default.logger.warn('currentPane', _slapUtil2.default.typeOf(currentPane || {}), self.state.currentPane, self.state.panes.length, _lodash2.default.get(currentPane, 'state'), this.state);
 
       return _react2.default.createElement(
         'element',
@@ -353,72 +355,7 @@ var Slap = (function (_BaseComponent) {
             right: 0,
             padding: { left: 1, right: 1 },
             tags: true }),
-          _react2.default.createElement(
-            'box',
-            _extends({ ref: 'title' }, _lodash2.default.merge({}, props.header, props.header.title), {
-              left: 0,
-              shrink: true,
-              tags: true }),
-            '✋ ' + _lodash2.default.get(currentPane, 'state.title', '')
-          ),
-          _react2.default.createElement(
-            'box',
-            _extends({ ref: 'headerRight' }, _lodash2.default.merge({}, props.header, props.header.headerRight), {
-              right: 0,
-              shrink: true,
-              tags: true }),
-            _react2.default.createElement(
-              'button',
-              _extends({ ref: 'helpButton' }, props.helpButton, {
-                right: 0,
-                onClick: function onClick() {
-                  self.help();
-                }, clickable: true }),
-              'Help',
-              helpBinding ? ': ' + helpBinding : ""
-            ),
-            _react2.default.createElement(
-              'box',
-              _extends({ ref: 'info' }, _lodash2.default.merge({}, props.header, props.info), {
-                right: _lodash2.default.get(refs, 'helpButton.width', 0) + 1,
-                tags: true,
-                shrink: true }),
-              cursor ? cursor.row + 1 + ',' + (cursor.column + 1) : '',
-              '(',
-              editor ? editor.textBuf.getLineCount() : '',
-              ')',
-              _blessed2.default.escape(editor && editor.textBuf.getEncoding() || ''),
-              _react2.default.createElement(
-                'box',
-                { show: _lodash2.default.get(editor, 'state.readOnly'), shrink: true },
-                ' ',
-                _react2.default.createElement(
-                  'box',
-                  _extends({ ref: 'readOnly' }, props.header.readOnly, { shrink: true }),
-                  'read-only'
-                )
-              ),
-              _react2.default.createElement(
-                'box',
-                { show: !_lodash2.default.get(editor, 'state.insertMode', true), shrink: true },
-                ' ',
-                _react2.default.createElement(
-                  'box',
-                  _extends({ ref: 'overwrite' }, props.header.overwrite, { shrink: true }),
-                  'OVR'
-                )
-              )
-            ),
-            _react2.default.createElement(
-              'box',
-              _extends({ ref: 'message' }, props.header.message, {
-                right: _lodash2.default.get(refs, 'helpButton.width') + 1 + _lodash2.default.get(refs, 'info.width') + 1,
-                padding: { left: 1, right: 1 },
-                tags: true,
-                shrink: true }),
-              state.message
-            )
-          )
+          '✋ ' + _lodash2.default.get(currentPane, 'state.title', '')
         ),
         _react2.default.createElement(
           'box',
@@ -460,7 +397,19 @@ var Slap = (function (_BaseComponent) {
                 },
                 top: 3 }))
             ),
-            currentPane
+            panes.map(function (pane, i) {
+              if (!pane) return '';
+              var isCurrentPane = state.currentPane === i;
+              var props = _lodash2.default.merge({ show: isCurrentPane }, pane.props);
+              if (isCurrentPane) props.ref = 'currentPane';
+              switch (pane.type) {
+                case 'EditorPane':
+                  return _react2.default.createElement(_EditorPane2.default, props);
+                default:
+                  _slapUtil2.default.logger.error('invalid pane type', pane.type, 'for pane', pane);
+                  return pane.toString();
+              }
+            })
           )
         )
       );

@@ -93,7 +93,7 @@ export default class Slap extends BaseComponent {
 
     var editor = _.get(pane, 'refs.editor')
     if (editor && editor.textBuf.isModified()) {
-      var currentPaneSaveAsCloseForm = (self.getCurrentPane() || {}).refs.saveAsCloseForm || {}
+      var currentPaneSaveAsCloseForm = _.get(self, 'refs.currentPane.refs.saveAsCloseForm', {})
       if (currentPaneSaveAsCloseForm.visible) {
         currentPaneSaveAsCloseForm.once('hide', () => { self.closePane(pane, ...args) })
       } else {
@@ -116,7 +116,7 @@ export default class Slap extends BaseComponent {
       .tap(() => {
         if (pane) return
         if (fs.lstatSync(filePath).isDirectory()) throw _.merge(new Error('EISDIR: illegal operation on a directory, read'), {cause: {code: 'EISDIR'}})
-        pane = self.newEditorPane({}, current)
+        pane = self.newPane({type: 'EditorPane'}, current)
         return pane.refs.editor.open(filePath).return(pane)
       })
       .catch(err => {
@@ -150,9 +150,9 @@ export default class Slap extends BaseComponent {
       })
   }
 
-  newEditorPane (props, current) {
+  newPane (paneOpts, current) {
     var panes = this.state.panes
-    var newState = {panes: panes.concat([<EditorPane {...props} />])}
+    var newState = {panes: panes.concat([paneOpts])}
     if (current) newState.currentPane = panes.length
     this.setState(newState)
   }
@@ -169,7 +169,7 @@ export default class Slap extends BaseComponent {
       : ''}`)
 
     switch (BaseWidget.prototype.resolveBinding.call({options: props}, key)) {
-      case 'new': self.newEditorPane({}, true); return false
+      case 'new': self.newPane({type: 'EditorPane'}, true); return false
       case 'open': refs.fileBrowser.show(); refs.fileBrowser.focus(); return false
       case 'nextPane': self.setState({currentPane: util.mod(state.currentPane + 1, panes.length)}); return false
       case 'prevPane': self.setState({currentPane: util.mod(state.currentPane - 1, panes.length)}); return false
@@ -185,7 +185,7 @@ export default class Slap extends BaseComponent {
                 if (self._panesBlockingQuit) {
                   self._panesBlockingQuit.splice(self._panesBlockingQuit.indexOf(pane), 1)
                   if (self._panesBlockingQuit.length) {
-                    self.getCurrentPane().saveAsCloseForm.show()
+                    _.result(self, 'refs.currentPane.refs.saveAsCloseForm.show')
                   } else {
                     self.quit()
                   }
@@ -222,12 +222,14 @@ export default class Slap extends BaseComponent {
     var state = self.state
     var panes = state.panes
 
-    var currentPane = self.getCurrentPane()
-    var editor = _.get(currentPane, 'refs.editor')
+    var currentPane = _.get(self, 'refs.currentPane')
+    var editor = _.get(self, 'currentPane.refs.editor')
     var cursor = editor ? editor.selection.getHeadPosition() : null
 
     var helpBinding = props.bindings.help
     if (Array.isArray(helpBinding)) helpBinding = helpBinding[0]
+
+    util.logger.warn('currentPane', util.typeOf(currentPane || {}), self.state.currentPane, self.state.panes.length, _.get(currentPane, 'state'), this.state)
 
     return (
       <element ref="root"
@@ -243,16 +245,9 @@ export default class Slap extends BaseComponent {
           padding={{left: 1, right: 1}}
           tags={true}>
 
-          <box ref="title" {..._.merge({}, props.header, props.header.title)}
-            left={0}
-            shrink={true}
-            tags={true}>
+          {`\u270b ${_.get(currentPane, 'state.title', '')}`}
 
-            {`\u270b ${_.get(currentPane, 'state.title', '')}`}
-
-          </box>
-
-          <box ref="headerRight" {..._.merge({}, props.header, props.header.headerRight)}
+          {/*<box ref="headerRight" {..._.merge({}, props.header, props.header.headerRight)}
             right={0}
             shrink={true}
             tags={true}>
@@ -291,7 +286,7 @@ export default class Slap extends BaseComponent {
               shrink={true}>
               {state.message}
             </box>
-          </box>
+          </box>*/}
         </box>
 
         <box ref="main"
@@ -326,7 +321,19 @@ export default class Slap extends BaseComponent {
 
             </box>
 
-            {currentPane}
+            {panes.map((pane, i) => {
+              if (!pane) return ''
+              var isCurrentPane = state.currentPane === i
+              var props = _.merge({show: isCurrentPane}, pane.props)
+              if (isCurrentPane) props.ref = 'currentPane'
+              switch (pane.type) {
+                case 'EditorPane': return (
+                  <EditorPane {...props} />
+                )
+                default: util.logger.error('invalid pane type', pane.type, 'for pane', pane)
+                         return pane.toString()
+              }
+            })}
 
           </box>
         </box>

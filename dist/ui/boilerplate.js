@@ -34,76 +34,41 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var Pane = (function (_BaseComponent) {
-  _inherits(Pane, _BaseComponent);
+var Foo = (function (_BaseComponent) {
+  _inherits(Foo, _BaseComponent);
 
-  function Pane() {
-    _classCallCheck(this, Pane);
+  function Foo() {
+    _classCallCheck(this, Foo);
 
-    return _possibleConstructorReturn(this, Object.getPrototypeOf(Pane).apply(this, arguments));
+    return _possibleConstructorReturn(this, Object.getPrototypeOf(Foo).apply(this, arguments));
   }
 
-  _createClass(Pane, [{
-    key: 'getInitialState',
-    value: function getInitialState() {
-      require('slap-util').logger.warn('Pane#getInitialState');
-      return _lodash2.default.merge({ title: "Untitled pane" }, _get(Object.getPrototypeOf(Pane.prototype), 'getInitialState', this).apply(this, arguments));
-    }
-  }, {
-    key: 'setCurrent',
-    value: function setCurrent() {
-      var slap = this.context.slap;
-      var i = slap.getPaneIndex(self);
-      if (i === -1) {
-        var panes = slap.panes;
-        i = panes.length;
-        panes.push(this);
-      }
-      slap.setState({
-        prevPane: slap.state.currentPane,
-        currentPane: i
-      });
-      this.refs.root.focus();
-      return this;
-    }
-  }, {
-    key: 'close',
-    value: function close() {
-      var slap = this.context.slap;
-      var i = slap.getPaneIndex(this);
-      if (i !== -1) slap.panes.splice(i, 1);
-      this.emit('close', i);
-      this.refs.root.detach();
-      return true;
-    }
-  }, {
-    key: 'componentWillUnmount',
-    value: function componentWillUnmount() {
-      this.context.slap.setState({ message: null });
-      return _get(Object.getPrototypeOf(Pane.prototype), 'componentWillUnmount', this).apply(this, arguments);
+  _createClass(Foo, [{
+    key: 'componentDidMount',
+    value: function componentDidMount() {
+      var self = this;
+      return _get(Object.getPrototypeOf(Foo.prototype), 'componentDidMount', this).apply(self, arguments);
     }
   }, {
     key: 'render',
     value: function render() {
       var self = this;
       var props = self.props;
-      var slap = self.context.slap;
 
       return _react2.default.createElement(
         'element',
-        _extends({ ref: 'root' }, props),
-        props.children,
-        _react2.default.createElement('box', _extends({ ref: 'form' }, props.form))
+        { ref: 'root' },
+        _react2.default.createElement('box', _extends({ ref: 'bar' }, props.bar))
       );
     }
   }], [{
     key: 'defaultProps',
     get: function get() {
-      return _lodash2.default.merge({}, _BaseComponent3.default.defaultProps, _opts2.default.pane);
+      return _lodash2.default.merge({}, _opts2.default.foo);
     }
   }]);
 
-  return Pane;
+  return Foo;
 })(_BaseComponent3.default);
 
-exports.default = Pane;
+exports.default = Foo;
